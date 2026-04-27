@@ -1,0 +1,60 @@
+---
+description: Use when working with historical financial data, backtests, point-in-time analysis, SEC filings, XBRL data, or any time-series quant research. Prevents lookahead bias by enforcing filing_date as the known-date and never period_end.
+alwaysApply: false
+---
+
+# Lookahead Safety
+
+The single most common bug in quant research with LLMs: using data that
+was not yet known at the moment you claim to have known it. This rule
+defines what to enforce when generating or reviewing such code.
+
+## The core rule
+
+**The known-date is the date a piece of information was PUBLISHED, not the
+date the information is ABOUT.**
+
+- A 10-K covering fiscal year 2023 may be filed in March 2024.
+  In January 2024, that 10-K **did not exist**.
+- An S-3 effective on 2024-04-15 was unknown on 2024-04-14.
+- An XBRL `SharesOutstanding` datapoint with `period_end: 2023-12-31`
+  is known only after the filing that contains it is published.
+
+When asked to compute or recommend anything `as of` a date `D`, only data
+where `filing_date <= D` is admissible.
+
+## Field-by-field reference for SEC data
+
+| Field | Use as known-date? | Notes |
+|-------|---------------------|-------|
+| `filing_date` / `acceptedDate` | YES | The publication moment |
+| `period_end` / `periodOfReport` | NEVER | The accounting period the data covers |
+| `effectiveDate` (S-3, etc.) | YES | When the registration becomes usable |
+| `reportDate` on XBRL facts | NO | Period covered, not publication |
+| `accepted` timestamp | YES | Most precise — use when intra-day matters |
+
+## Common traps
+
+1. **The XBRL trap.** `companyfacts.json` returns datapoints keyed by
+   `period_end`. Naively iterating these as a time series leaks future
+   information. Always join with the originating filing's `accepted`
+   date and treat THAT as availability.
+2. **The amendment trap.** A 10-K/A supersedes the original 10-K but is
+   filed later. Don't apply restated numbers to dates before the
+   amendment's `filing_date`.
+3. **The "as of today" trap in backtests.** Snapshots of current values
+   are unsafe for any historical query.
+4. **The price-data trap.** Adjusted prices use future split factors.
+   Use raw OHLC + a split history table where each split has its own
+   ex-date as the cutoff.
+5. **The earnings-revision trap.** Backtests that use the latest
+   restated earnings for old dates are fictional.
+
+## Workflow when writing backtest code
+
+- Every read of historical state must take a `query_date` argument and
+  filter on `filing_date <= query_date`.
+- Never store "current" values in a structure used for historical lookup.
+- Prefer the EARLIEST plausible publication date when in doubt.
+- Add a "future-data leak" test that fails if any record with
+  `filing_date > query_date` is returned by a historical query.
