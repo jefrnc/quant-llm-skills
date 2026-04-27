@@ -38,8 +38,9 @@ Once published to GitHub, the install becomes:
 |---|---|
 | **lookahead-safety** | Forces the LLM to use `filing_date` as known-date, never `period_end`. Catches the #1 backtest bug. |
 | **sec-filing-types** | Disambiguates SEC forms (S-3, 424B, 8-K items, 13D/G, Form 4, 20-F, 6-K, NT 10-K). Knows that an S-3 alone is capacity, not action. |
+| **atm-detection** | Multi-signal inference for active At-The-Market offerings. Distinguishes ATM from ELOC and registered direct. Catches the dilution that 8-K-only scanners miss. |
 
-More coming: `atm-detection`, `bank-tier-classification`, `xbrl-fallbacks`,
+More coming: `bank-tier-classification`, `xbrl-fallbacks`,
 `dilution-event-scoring`, `insider-dedup`.
 
 ## License
