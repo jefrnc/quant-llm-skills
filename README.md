@@ -41,8 +41,9 @@ Once published to GitHub, the install becomes:
 | **atm-detection** | Multi-signal inference for active At-The-Market offerings. Distinguishes ATM from ELOC and registered direct. Catches the dilution that 8-K-only scanners miss. |
 | **bank-tier-classification** | 4-tier framework mapping placement agents (Goldman → Wainwright → Maxim → Aegis) to expected deal behavior. Same 424B5 with different agents = different trades. |
 | **xbrl-fallbacks** | When SEC XBRL is empty/404 (FPIs, recent IPOs, SPACs), defines the cover-page hierarchy (10-Q → 10-K → 6-K → 20-F → F-1 → 424B → DEF 14A) and extraction rules. |
+| **dilution-event-scoring** | 0-100 framework integrating ATM + agent tier + filing recency + cash runway + structure + history. Transparent, reproducible, actionable thresholds (SEVERE / HIGH / MODERATE / LOW / MINIMAL). |
 
-More coming: `dilution-event-scoring`, `insider-dedup`.
+More coming: `insider-dedup`.
 
 ## License
 
