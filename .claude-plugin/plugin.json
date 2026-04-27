@@ -7,5 +7,8 @@
   },
   "license": "MIT",
   "keywords": ["quant", "trading", "sec-filings", "claude-code", "skills"],
-  "skills": ["./skills/lookahead-safety"]
+  "skills": [
+    "./skills/lookahead-safety",
+    "./skills/sec-filing-types"
+  ]
 }
