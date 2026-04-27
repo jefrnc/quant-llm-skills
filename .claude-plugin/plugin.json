@@ -11,6 +11,7 @@
     "./skills/lookahead-safety",
     "./skills/sec-filing-types",
     "./skills/atm-detection",
-    "./skills/bank-tier-classification"
+    "./skills/bank-tier-classification",
+    "./skills/xbrl-fallbacks"
   ]
 }

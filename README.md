@@ -40,8 +40,9 @@ Once published to GitHub, the install becomes:
 | **sec-filing-types** | Disambiguates SEC forms (S-3, 424B, 8-K items, 13D/G, Form 4, 20-F, 6-K, NT 10-K). Knows that an S-3 alone is capacity, not action. |
 | **atm-detection** | Multi-signal inference for active At-The-Market offerings. Distinguishes ATM from ELOC and registered direct. Catches the dilution that 8-K-only scanners miss. |
 | **bank-tier-classification** | 4-tier framework mapping placement agents (Goldman → Wainwright → Maxim → Aegis) to expected deal behavior. Same 424B5 with different agents = different trades. |
+| **xbrl-fallbacks** | When SEC XBRL is empty/404 (FPIs, recent IPOs, SPACs), defines the cover-page hierarchy (10-Q → 10-K → 6-K → 20-F → F-1 → 424B → DEF 14A) and extraction rules. |
 
-More coming: `xbrl-fallbacks`, `dilution-event-scoring`, `insider-dedup`.
+More coming: `dilution-event-scoring`, `insider-dedup`.
 
 ## License
 

@@ -1,0 +1,163 @@
+---
+name: xbrl-fallbacks
+description: Use when SEC XBRL company-facts data returns 404, is empty, or has sparse coverage — typical for recent FPIs (foreign private issuers), recent IPOs, SPACs, or shell companies. Defines the document hierarchy and extraction rules to recover shares-outstanding data from filing text when structured XBRL is unavailable.
+license: MIT
+---
+
+# XBRL Fallbacks
+
+XBRL coverage is incomplete. Many real issuers — especially the small-cap
+universe where dilution analysis matters most — return either 404 or
+empty datapoints from `data.sec.gov/api/xbrl/companyfacts/CIK*.json`.
+Treating absence of XBRL as absence of data is a quant pipeline bug.
+The shares-outstanding number is almost always *somewhere*; just not
+in the structured feed.
+
+## Core principle
+
+**XBRL is one source, not the source.** When the structured feed is
+sparse or missing, the same datapoint is recoverable by reading the
+filing's text — typically the cover page or an early section of the
+prospectus. Build the fallback path explicitly into the pipeline; don't
+treat XBRL 404 as "no data".
+
+## When XBRL fails (the 404 / empty-set universe)
+
+1. **Recent FPIs** (Foreign Private Issuers). They file F-1, 20-F, 6-K
+   in HTML/PDF. XBRL coverage is often delayed, partial, or absent for
+   years after IPO. Common in Chinese small-cap IPOs (`-F` suffix CIKs,
+   recent listings on Nasdaq Capital Market).
+2. **Recent US IPOs** in the first 2 quarters post-listing — 10-Q
+   XBRL exists but the cover-page share count may be the only reliable
+   datapoint until the second 10-K is filed.
+3. **SPACs pre-business-combination.** The shell phase has minimal
+   XBRL; cover-page counts on the most recent 10-Q/10-K govern.
+4. **Shell companies / OTC issuers** where XBRL is filed late or only
+   for the most recent period.
+5. **Amended filings (10-K/A, 10-Q/A)** — sometimes don't republish
+   XBRL; you have to read the amendment text.
+
+## Fallback hierarchy
+
+When XBRL is missing or stale, search for shares-outstanding in this
+order:
+
+1. **Most recent 10-Q cover page** (US issuer) — "As of [date], the
+   registrant had [N] shares of common stock, $[par] par value, outstanding."
+2. **Most recent 10-K cover page** (US issuer) — same pattern, slightly
+   different timing (annual).
+3. **Most recent 6-K cover or text** (FPI) — variable format; often
+   reports issuance counts within the body. Look for "ordinary shares"
+   or "common shares" + "issued and outstanding".
+4. **Most recent 20-F cover** (FPI annual) — formal cover-page
+   statement near the registrant block.
+5. **Most recent F-1 / F-3 / F-3A cover or first page** (FPI registration).
+6. **Most recent 424B prospectus supplement cover** — discloses
+   pre-offering share count and post-offering count.
+7. **Most recent DEF 14A** (proxy) — record-date count, useful as
+   a sanity check.
+8. **Form 10 / S-1** (if newly registering) — initial count.
+
+The earliest plausible source wins; later sources are sanity checks.
+Always record which source was used.
+
+## Extraction patterns (text-based)
+
+Cover-page share-count language is heavily templated. The common forms:
+
+- "As of [date], [N] shares of [class] common stock were outstanding."
+- "[N] shares of common stock, par value $[X] per share, are issued
+  and outstanding as of [date]."
+- "[N] ordinary shares" / "[N] American Depositary Shares (ADSs)"
+  representing [M] ordinary shares (FPI ADR structure — keep BOTH
+  numbers and note the ratio).
+- "[N] Class A common stock and [M] Class B common stock"
+  (multi-class issuers — sum carefully or track per-class).
+- "issued and outstanding": [N] (table format common in proxies).
+
+Numbers may be expressed with commas, no commas, or scaled
+("12.3 million" / "12,300,000"). Always normalize to integer share
+count and record the as-of date.
+
+## Multi-class share gotchas
+
+Many small-cap FPIs and biotech reorganizations have multiple share
+classes. Treating "common stock outstanding" as a single number can be
+wrong by a factor of 2–10x.
+
+- **Class A / Class B**: voting/economic asymmetry — sum for total
+  outstanding but track separately for control analysis.
+- **Ordinary shares + ADSs**: FPI structure. ADSs trade on the US
+  exchange but represent ordinary shares at a ratio (often 1:10 or
+  1:50). Float-rotation math must use the ADS-equivalent count, not
+  the underlying ordinary share count.
+- **Preferred convertible into common**: not currently outstanding as
+  common but creates shadow dilution. Note as a separate line.
+
+## Synthetic-tag convention (for pipelines)
+
+When emitting fallback data into a downstream system that expects XBRL
+shape, use a synthetic tag namespace to preserve provenance:
+
+```
+{
+  "tag": "text:SharesOutstanding",
+  "value": 23300000,
+  "source_form": "424B4",
+  "source_accession": "0001213900-24-XXXXXX",
+  "as_of_date": "2024-09-15",
+  "filed_date": "2024-09-18",
+  "confidence": "medium"
+}
+```
+
+`text:` prefix distinguishes from real XBRL (`us-gaap:`, `dei:`,
+`ifrs-full:`). Confidence reflects parsing precision (e.g.,
+"high" = direct quote, "medium" = inferred from context, "low" =
+calculated from offering deltas).
+
+## Validation rules
+
+1. The fallback datapoint's `filed_date` must obey `lookahead-safety`
+   — never use `as_of_date` as the known-date.
+2. Cross-check the fallback against ANY available XBRL — even one
+   datapoint can confirm the order of magnitude.
+3. Sanity-check against the offering history: if the issuer raised
+   N shares between two cover-page disclosures, the difference between
+   the two counts should be approximately N (modulo buybacks, splits,
+   exercises).
+4. Flag any fallback as `text:` and surface the source filing in the
+   final output — don't silently treat it as XBRL-quality.
+
+## Workflow when XBRL returns 404 or empty
+
+1. Confirm the CIK is correct (most common false-404 cause is a CIK
+   typo or unmapped ticker — see `cik-resolution` if available).
+2. Pull the issuer's full submissions list:
+   `data.sec.gov/submissions/CIK{padded}.json`
+3. Walk filings in REVERSE chronological order through the hierarchy
+   above (10-Q → 10-K → 6-K → 20-F → F-* → 424B → DEF 14A).
+4. Extract the cover-page count from the FIRST filing that has it.
+5. For historical analysis, walk forward from the earliest fallback
+   datapoint, applying offering deltas (424B / 8-K item 3.02) between
+   stamps to maintain a continuous timeline.
+6. Tag every fallback datapoint with source attribution and confidence.
+
+## Phrases that should trigger this skill
+
+- "XBRL is empty / missing / 404"
+- "no XBRL for ticker X"
+- "FPI shares outstanding" / "Chinese small cap shares outstanding"
+- "20-F" / "6-K" / "F-1" + share count
+- "ADS to ordinary shares ratio"
+- "cover page shares"
+- "how do I get shares outstanding without XBRL"
+- "SPAC shares outstanding"
+
+## What this skill is NOT
+
+This is not a regex library or extractor. It defines the source
+hierarchy and validation rules so the LLM (or pipeline) can decide
+WHERE to look and HOW to attribute the result. Combine with
+`lookahead-safety` for time semantics and `sec-filing-types` for
+form-by-form context.
