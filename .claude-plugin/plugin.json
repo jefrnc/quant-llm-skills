@@ -1,0 +1,11 @@
+{
+  "name": "quant-llm-skills",
+  "description": "Skills for doing quant research with LLMs without lookahead bias, filing-parsing pitfalls, or naive data assumptions",
+  "version": "0.1.0",
+  "author": {
+    "name": "jefrnc"
+  },
+  "license": "MIT",
+  "keywords": ["quant", "trading", "sec-filings", "claude-code", "skills"],
+  "skills": ["./skills/lookahead-safety"]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "quant-llm-skills",
+  "id": "quant-llm-skills",
+  "owner": {
+    "name": "jefrnc"
+  },
+  "metadata": {
+    "description": "Skills for doing quant research with LLMs",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "quant-llm-skills",
+      "source": "./",
+      "description": "Skills for quant research with LLMs: lookahead safety, SEC filing types, ATM detection, bank tier classification, dilution event scoring",
+      "version": "0.1.0",
+      "author": {
+        "name": "jefrnc"
+      },
+      "keywords": ["quant", "trading", "sec-filings", "claude-code"],
+      "category": "research"
+    }
+  ]
+}
