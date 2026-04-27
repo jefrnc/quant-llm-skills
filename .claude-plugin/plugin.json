@@ -10,6 +10,7 @@
   "skills": [
     "./skills/lookahead-safety",
     "./skills/sec-filing-types",
-    "./skills/atm-detection"
+    "./skills/atm-detection",
+    "./skills/bank-tier-classification"
   ]
 }
