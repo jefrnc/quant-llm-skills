@@ -1,6 +1,6 @@
 ---
 name: lookahead-safety
-description: Use when working with historical financial data, backtests, point-in-time analysis, SEC filings, XBRL data, or any time-series quant research. Prevents lookahead bias by enforcing filing_date as the known-date and never period_end.
+description: Use when working with historical financial data, backtests, point-in-time analysis, SEC filings, XBRL data, or any time-series quant research. Prevents look-ahead bias and survivorship bias by enforcing filing_date / accepted as the known-date, never period_end. Triggers on phrases like "as of", "historical", "backtest", "lookahead", "point-in-time".
 license: MIT
 ---
 

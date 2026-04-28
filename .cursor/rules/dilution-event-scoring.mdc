@@ -1,5 +1,5 @@
 ---
-description: Use when assessing how dilutive a small-cap stock's situation is on a 0-100 scale. Integrates ATM activity, placement-agent tier, filing recency, cash runway, warrant attachment, and repeat-dilution history into a single decision-grade score with action thresholds.
+description: Use when assessing, ranking, comparing, or rating dilution risk for one or more small-cap stocks. Produces a transparent 0-100 score integrating ATM activity, placement-agent tier, filing recency, cash runway, warrant attachment, and repeat-dilution history, with auditable component breakdown and action thresholds (SEVERE / HIGH / MODERATE / LOW / MINIMAL).
 alwaysApply: false
 ---
 
