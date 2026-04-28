@@ -42,8 +42,7 @@ Once published to GitHub, the install becomes:
 | **bank-tier-classification** | 4-tier framework mapping placement agents (Goldman → Wainwright → Maxim → Aegis) to expected deal behavior. Same 424B5 with different agents = different trades. |
 | **xbrl-fallbacks** | When SEC XBRL is empty/404 (FPIs, recent IPOs, SPACs), defines the cover-page hierarchy (10-Q → 10-K → 6-K → 20-F → F-1 → 424B → DEF 14A) and extraction rules. |
 | **dilution-event-scoring** | 0-100 framework integrating ATM + agent tier + filing recency + cash runway + structure + history. Transparent, reproducible, actionable thresholds (SEVERE / HIGH / MODERATE / LOW / MINIMAL). |
-
-More coming: `insider-dedup`.
+| **insider-dedup** | Joint-filer / group / family-attribution dedup rules for 13D/G and Form 4 aggregation. Stops the "sum of cover pages" bug that overcounts positions 2-10x. |
 
 ## License
 

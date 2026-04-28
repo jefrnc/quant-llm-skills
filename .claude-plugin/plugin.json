@@ -13,6 +13,7 @@
     "./skills/atm-detection",
     "./skills/bank-tier-classification",
     "./skills/xbrl-fallbacks",
-    "./skills/dilution-event-scoring"
+    "./skills/dilution-event-scoring",
+    "./skills/insider-dedup"
   ]
 }
