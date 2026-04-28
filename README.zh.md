@@ -2,6 +2,10 @@
 
 > 🇨🇳 **简体中文** | [🇺🇸 English](./README.md) | [🇪🇸 Español](./README.es.md)
 
+[![validate](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20pack-orange)](https://docs.anthropic.com/en/docs/claude-code)
+
 > **专为 LLM 量化研究设计的 skills，规避那些没人讨论但会让回测失真的陷阱。**
 
 GitHub 上大多数 "AI for trading" skill 包教 Claude 回测 CANSLIM、解析

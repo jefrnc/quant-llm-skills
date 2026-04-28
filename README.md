@@ -2,6 +2,10 @@
 
 > 🇺🇸 **English** | [🇪🇸 Español](./README.es.md) | [🇨🇳 简体中文](./README.zh.md)
 
+[![validate](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20pack-orange)](https://docs.anthropic.com/en/docs/claude-code)
+
 > **Skills for quant research with LLMs that don't fall for the traps
 > nobody talks about.**
 
@@ -109,6 +113,27 @@ Equivalent rules for Cursor live under [`.cursor/rules/`](./.cursor/rules/).
 They are auto-generated from the canonical `SKILL.md` files via
 [`scripts/sync-cursor.py`](./scripts/sync-cursor.py); see
 [CURSOR.md](./CURSOR.md) for details.
+
+## More
+
+- [`EXAMPLES.md`](./EXAMPLES.md) — real prompt-and-response transcripts
+- [`LAUNCH.md`](./LAUNCH.md) — launch playbook (publish, post, iterate)
+- [`CHANGELOG.md`](./CHANGELOG.md) — version history
+- [`CURSOR.md`](./CURSOR.md) — Cursor usage and sync workflow
+
+## Contribute
+
+Issue templates for [skill misses](./.github/ISSUE_TEMPLATE/skill-miss.md)
+and [skill requests](./.github/ISSUE_TEMPLATE/skill-request.md) live
+under `.github/ISSUE_TEMPLATE/`.
+
+Common tasks:
+
+```
+make validate   # static checks
+make sync       # regenerate .cursor/rules/ from skills/
+make smoke      # live dispatch test (requires claude CLI + auth)
+```
 
 ## License
 

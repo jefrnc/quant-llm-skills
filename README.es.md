@@ -2,6 +2,10 @@
 
 > 🇪🇸 **Español** | [🇺🇸 English](./README.md) | [🇨🇳 简体中文](./README.zh.md)
 
+[![validate](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/jefrnc/quant-llm-skills/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20pack-orange)](https://docs.anthropic.com/en/docs/claude-code)
+
 > **Skills para hacer quant research con LLMs sin caer en las trampas
 > de las que nadie habla.**
 
