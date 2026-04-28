@@ -14,6 +14,11 @@ parse 10-Ks for AAPL. They fail the moment you point them at a real
 small-cap with sparse XBRL, an active ATM, and four 13D filers reporting
 the same shares.
 
+> 🎯 **Especially valuable on Haiku and smaller models.** In our benchmarks,
+> Haiku catches a textbook XBRL lookahead bug **0% of the time without
+> this plugin, 100% with it.** Cost-conscious users running cheaper models
+> are silently writing broken backtests. See [BENCHMARKS.md](./BENCHMARKS.md).
+
 This pack distills hard rules from running production quant pipelines
 into Claude Code skills the LLM applies automatically — no system-prompt
 hacking, no manual invocation, no extra glue.
@@ -46,6 +51,7 @@ See [EXAMPLES.md](./EXAMPLES.md) for real prompt-and-response transcripts.
 | [**xbrl-fallbacks**](./skills/xbrl-fallbacks/SKILL.md) | When SEC XBRL is empty or 404 (FPIs, recent IPOs, SPACs), defines the cover-page hierarchy and extraction rules. |
 | [**dilution-event-scoring**](./skills/dilution-event-scoring/SKILL.md) | 0–100 framework integrating ATM + agent tier + recency + cash runway + structure + history. Reproducible, auditable, with action thresholds. |
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | Joint-filer / group / family-attribution dedup rules for 13D/G and Form 4 aggregation. Stops the cover-page-sum bug. |
+| [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | Domain-specific code-review checklist (lookahead, splits, snapshots, NaN propagation, joint-filer dedup). Ranks bugs by silent-corruption potential, not by severity-of-symptom. |
 
 The skills compose: ask "score X's dilution risk" and the scoring skill
 calls the ATM, agent-tier, and lookahead skills automatically.
@@ -117,6 +123,7 @@ They are auto-generated from the canonical `SKILL.md` files via
 ## More
 
 - [`EXAMPLES.md`](./EXAMPLES.md) — real prompt-and-response transcripts
+- [`BENCHMARKS.md`](./BENCHMARKS.md) — empirical Haiku / Sonnet / Opus comparisons
 - [`LAUNCH.md`](./LAUNCH.md) — launch playbook (publish, post, iterate)
 - [`CHANGELOG.md`](./CHANGELOG.md) — version history
 - [`CURSOR.md`](./CURSOR.md) — Cursor usage and sync workflow

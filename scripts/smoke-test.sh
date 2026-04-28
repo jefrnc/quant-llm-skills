@@ -25,6 +25,7 @@ expected=(
     "xbrl-fallbacks"
     "dilution-event-scoring"
     "insider-dedup"
+    "code-review-for-quant"
 )
 
 missing=0
@@ -44,4 +45,4 @@ if (( missing > 0 )); then
 fi
 
 echo
-echo "✓ All 7 skills loaded correctly. Plugin is ready to publish."
+echo "✓ All 8 skills loaded correctly. Plugin is ready to publish."

@@ -14,6 +14,7 @@
     "./skills/bank-tier-classification",
     "./skills/xbrl-fallbacks",
     "./skills/dilution-event-scoring",
-    "./skills/insider-dedup"
+    "./skills/insider-dedup",
+    "./skills/code-review-for-quant"
   ]
 }

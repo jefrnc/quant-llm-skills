@@ -48,6 +48,7 @@ y respuesta.
 | [**xbrl-fallbacks**](./skills/xbrl-fallbacks/SKILL.md) | Cuando XBRL viene vacío o 404 (FPIs, IPOs recientes, SPACs), define la jerarquía de cover pages y reglas de extracción. |
 | [**dilution-event-scoring**](./skills/dilution-event-scoring/SKILL.md) | Framework 0-100 que integra ATM + tier + recencia + cash runway + estructura + historia. Reproducible, auditable, con thresholds accionables. |
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | Reglas de dedup para joint filers / grupos / atribución familiar en 13D/G y Form 4. Frena el bug del cover-page-sum. |
+| [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | Checklist de code review específico de quant (lookahead, splits, snapshots, NaN, dedup de joint filers). Rankea bugs por *silent corruption*, no por severidad-aparente. |
 
 Los skills componen: pedile "score X dilution risk" y el scoring llama
 a los skills de ATM, agent-tier y lookahead automáticamente.

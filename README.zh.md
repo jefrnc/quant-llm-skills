@@ -41,6 +41,7 @@ skills，LLM 自动应用 —— 无需修改 system prompt、无需手动触发
 | [**xbrl-fallbacks**](./skills/xbrl-fallbacks/SKILL.md) | 当 SEC XBRL 为空或 404（FPI、近期 IPO、SPAC）时，定义 cover page 的层级与提取规则。 |
 | [**dilution-event-scoring**](./skills/dilution-event-scoring/SKILL.md) | 整合 ATM + agent tier + 时效 + 现金跑道 + 结构 + 历史的 0-100 评分框架。可复现、可审计、含可执行阈值。 |
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | 13D/G 与 Form 4 聚合中的联合 filer / 团体 / 家庭归属去重规则。阻止 cover-page-sum 的 bug。 |
+| [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | 量化代码审查清单（lookahead、splits、snapshots、NaN、联合 filer 去重）。按*静默腐蚀*潜力排序 bug，而非按表面严重性。 |
 
 各 skill 互相组合：让它 "score X's dilution risk"，scoring skill 会
 自动调用 ATM、agent-tier 和 lookahead 等 skills。
