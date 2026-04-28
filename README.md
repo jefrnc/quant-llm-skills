@@ -1,5 +1,7 @@
 # quant-llm-skills
 
+> 🇺🇸 **English** | [🇪🇸 Español](./README.es.md) | [🇨🇳 简体中文](./README.zh.md)
+
 > **Skills for quant research with LLMs that don't fall for the traps
 > nobody talks about.**
 
@@ -100,6 +102,13 @@ claude plugin validate /path/to/quant-llm-skills
 ```
 
 All skills pass `claude plugin validate` and load via `--plugin-dir`.
+
+## Cursor support
+
+Equivalent rules for Cursor live under [`.cursor/rules/`](./.cursor/rules/).
+They are auto-generated from the canonical `SKILL.md` files via
+[`scripts/sync-cursor.py`](./scripts/sync-cursor.py); see
+[CURSOR.md](./CURSOR.md) for details.
 
 ## License
 

@@ -1,0 +1,195 @@
+---
+description: Use when assessing how dilutive a small-cap stock's situation is on a 0-100 scale. Integrates ATM activity, placement-agent tier, filing recency, cash runway, warrant attachment, and repeat-dilution history into a single decision-grade score with action thresholds.
+alwaysApply: false
+---
+
+# Dilution Event Scoring
+
+A reproducible 0–100 framework for "how dilutive is this name right now."
+The point is not to be perfectly accurate — it is to be **transparent
+and consistent** so you can compare across tickers and across time
+without drift.
+
+## Core principle
+
+**Score components, then combine. Never start from gut, then justify.**
+
+Each component contributes independently. Final score is a weighted
+sum, capped at 100. Every score must be reproducible from the inputs;
+if you can't write down which signals fired, you don't have a score —
+you have an opinion.
+
+## Components and weights
+
+| Component | Max points | Sourced from |
+|-----------|-----------:|--------------|
+| Active ATM detected | 30 | `atm-detection` |
+| Placement agent tier | 20 | `bank-tier-classification` |
+| Filing recency | 15 | filing dates |
+| Cash runway | 15 | last 10-Q "Liquidity" / cash + burn rate |
+| Structural toxicity (warrants, ELOC, deep discount) | 10 | 424B / 8-K body |
+| Repeat-dilution history (12mo) | 10 | filing-count over 12-month window |
+| **Total** | **100** | |
+
+### Active ATM detected (0–30)
+
+| State | Points |
+|-------|-------:|
+| Confirmed active ATM (3-signal rule passes; recent 10-Q confirms in-use) | 30 |
+| Active ATM authorized but no recent 10-Q confirmation of use | 22 |
+| ELOC active (Common Stock Purchase Agreement with single counterparty) | 25 |
+| Registered direct in last 30 days, no ATM | 12 |
+| Effective shelf only (S-3/F-3 effective, no 424B in 6+ months) | 5 |
+| No effective shelf, no recent offering | 0 |
+
+### Placement agent tier (0–20)
+
+Apply only when an offering or sales agreement is in flight. If no
+agent is named or none of the signals above fire, this component is 0.
+
+| Tier | Points |
+|------|-------:|
+| Tier 4 (specialized small-cap placement, e.g., Wainwright on ATM) | 20 |
+| Tier 3 (boutique / sector specialist) | 12 |
+| Tier 2 (mid-tier full-service) | 6 |
+| Tier 1 (bulge bracket) | 2 |
+| No agent involved (e.g., S-1 for shell, no underwriter) | 8 *(unknown is risk)* |
+
+### Filing recency (0–15)
+
+The market's memory of a dilution event decays. Recent = more pressure.
+
+| Most recent dilution-relevant filing | Points |
+|--------------------------------------|-------:|
+| 424B / 8-K item 3.02 in last 7 days | 15 |
+| In last 30 days | 10 |
+| In last 90 days | 5 |
+| > 90 days | 0 |
+
+### Cash runway (0–15)
+
+Estimate from last 10-Q: `(cash + equivalents) / quarterly burn`.
+Use the most conservative interpretation when data is partial.
+
+| Estimated runway | Points |
+|------------------|-------:|
+| < 3 months | 15 |
+| 3–6 months | 12 |
+| 6–12 months | 7 |
+| 12–24 months | 3 |
+| > 24 months | 0 |
+
+If runway cannot be estimated (no recent 10-Q, going-concern language
+without numbers), assign 10 and flag for manual review.
+
+### Structural toxicity (0–10)
+
+Read the 424B / agreement for these features. Each present = 2 points,
+capped at 10.
+
+- Warrants attached at or below offering price
+- Pricing at >15% discount to last close
+- ELOC / Standby Equity Purchase Agreement with discount-to-VWAP pricing
+- Convertible note with reset / variable conversion
+- "Best efforts" placement (no firm commitment)
+- Multiple amendments to S-3 in last 12 months (suggests repeat use)
+- Going-concern language in the most recent 10-Q
+
+### Repeat-dilution history (0–10)
+
+Count distinct dilutive events in the trailing 12 months (424Bs, 8-K
+3.02s, S-8 effectivenesses, registered amendments).
+
+| Events in last 12 months | Points |
+|--------------------------|-------:|
+| 6+ | 10 |
+| 3–5 | 7 |
+| 2 | 4 |
+| 1 | 2 |
+| 0 | 0 |
+
+## Score thresholds and actions
+
+| Score | Label | Action recommendation |
+|-------|-------|-----------------------|
+| 75–100 | 🚨 SEVERE | Treat as continuous selling pressure. Avoid long. Short candidate on strength. Confirm with `atm-detection`. |
+| 55–74 | ⚠️ HIGH | Material dilution overhang. Reduce size, no overnight on green days. |
+| 35–54 | ⚠️ MODERATE | Watch carefully. Tradable with discipline. |
+| 15–34 | LOW | Background risk only; structure looks clean. |
+| 0–14 | MINIMAL | No active dilution mechanism detected. |
+
+## Worked example (illustrative)
+
+Input: ticker XYZ, today.
+
+| Signal | Score |
+|--------|------:|
+| ATM detected: confirmed active, last 10-Q says "$8M sold YTD under ATM" | 30 |
+| Agent: H.C. Wainwright on the Sales Agreement (Tier 4) | 20 |
+| Most recent 424B5: 5 days ago | 15 |
+| Cash runway from last 10-Q: ~4 months | 12 |
+| Structural toxicity: warrants attached, going-concern language → 2 + 2 | 4 |
+| Repeat dilution: 5 events in 12 months | 7 |
+| **Total** | **88** |
+
+Verdict: SEVERE. Continuous selling overhang; treat any rally as a
+print opportunity for the issuer.
+
+## Hard rules
+
+1. **Never publish a score without the component breakdown.** A naked
+   number is not actionable and not auditable.
+2. **Lookahead safety applies to every component.** A 424B "in last 7
+   days" means filing_date <= today AND >= today minus 7 — no future
+   data. Re-scoring an old date requires the data state AS OF that date.
+3. **Do not double-count.** ATM points already encode the 424B + agent
+   structure; the "filing recency" component refers to the calendar
+   age of the most recent filing, not the existence of the filing.
+4. **Re-score at every new filing.** A score is a snapshot, not a
+   permanent label. New 10-Q can drop runway points; new 424B can
+   restart filing-recency points; an 8-K announcing ATM termination
+   should drop the ATM points to 0.
+5. **Component weights are not sacred.** They are calibrated for
+   small-cap US/FPI tickers. For different universes (large-cap, REITs,
+   biotech with milestone-based structures), recalibrate before using.
+
+## Anti-patterns
+
+- **Scoring on a single signal.** "S-3 effective → 100" is not a score,
+  it's pattern-matching. Always require multi-component composition.
+- **Hand-waving cash runway.** If you can't extract the number, assign
+  10 and flag — don't assume zero.
+- **Treating tier as a moral judgment.** Tier 4 is a behavior
+  prediction, not a verdict on the firm. Same for low scores: a clean
+  Tier 1 underwritten secondary is still dilutive on pricing day.
+
+## Workflow
+
+1. Collect inputs:
+   - last effective S-3/F-3, latest 424B*, latest 8-K items
+   - placement agent name (if any)
+   - last 10-Q cash + quarterly burn
+   - 12-month filing history
+2. For each component, compute the sub-score using the tables above.
+   Always cite the source filing.
+3. Sum, cap at 100.
+4. Output: total score, component breakdown, verdict label, top
+   contributing signals.
+5. Stamp with the data-as-of date for reproducibility (lookahead-safety).
+
+## Phrases that should trigger this skill
+
+- "how dilutive is X" / "score the dilution risk"
+- "dilution score" / "dilution risk score"
+- "is this stock about to dump"
+- "compare dilution risk between X and Y"
+- "rank these tickers by dilution"
+
+## What this skill is NOT
+
+This is not a price target or a trading signal. It quantifies the
+**structural** dilution risk in the filings; it does not predict
+short-term price moves, scoring trade entries, or confirm execution
+mechanics. Combine outputs with price/volume context and your own
+trade plan. Required upstream skills: `atm-detection`,
+`bank-tier-classification`, `sec-filing-types`, `lookahead-safety`.

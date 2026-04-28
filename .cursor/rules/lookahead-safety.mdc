@@ -1,0 +1,99 @@
+---
+description: Use when working with historical financial data, backtests, point-in-time analysis, SEC filings, XBRL data, or any time-series quant research. Prevents lookahead bias by enforcing filing_date as the known-date and never period_end.
+alwaysApply: false
+---
+
+# Lookahead Safety
+
+The single most common bug in quant research with LLMs: using data that
+was not yet known at the moment you claim to have known it. This skill
+defines the rules to keep historical analysis honest.
+
+## The core rule
+
+**The known-date is the date a piece of information was PUBLISHED, not the
+date the information is ABOUT.**
+
+- A 10-K covering fiscal year 2023 may be filed in March 2024.
+  In January 2024, that 10-K **did not exist**.
+- An S-3 effective on 2024-04-15 was unknown on 2024-04-14.
+- An XBRL `SharesOutstanding` datapoint with `period_end: 2023-12-31`
+  is known only after the filing that contains it is published.
+
+When asked to compute or recommend anything `as of` a date `D`, only data
+where `filing_date <= D` is admissible.
+
+## Field-by-field reference for SEC data
+
+| Field | Use as known-date? | Notes |
+|-------|---------------------|-------|
+| `filing_date` / `acceptedDate` | ✅ YES | The publication moment |
+| `period_end` / `periodOfReport` | ❌ NEVER | The accounting period the data covers |
+| `effectiveDate` (S-3, etc.) | ✅ YES | When the registration becomes usable |
+| `reportDate` on XBRL facts | ❌ NO | Period covered, not publication |
+| `accepted` timestamp | ✅ YES | Most precise — use when intra-day matters |
+
+## Common traps
+
+1. **The XBRL trap.** `companyfacts.json` returns datapoints keyed by
+   `period_end`. Naively iterating these as a time series leaks future
+   information — the datapoint with `period_end: 2023-12-31` was first
+   published months later. Always join with the originating filing's
+   `accepted` date and treat THAT as availability.
+
+2. **The amendment trap.** A 10-K/A (amendment) supersedes the original 10-K
+   but is filed later. At time `D` between the original and the amendment,
+   only the original was known. Don't apply restated numbers to dates
+   before the amendment's `filing_date`.
+
+3. **The "as of today" trap in backtests.** When using current data
+   (e.g., `current_shares_outstanding`), confirm whether the source
+   provides a point-in-time history or only the current snapshot.
+   A snapshot is unsafe for any historical query.
+
+4. **The price-data trap.** Adjusted prices are computed using SPLIT
+   factors from splits that may not have happened yet at date `D`. Use
+   raw OHLC + a split history table where each split has its own
+   ex-date as the cutoff.
+
+5. **The earnings-revision trap.** Restated earnings (a later 10-K/A
+   correcting a previous 10-K) were unknown until restatement. Backtests
+   that use the latest version of earnings for old dates are fictional.
+
+## Workflow when the user asks "what was X on date D"
+
+1. Identify the data source (XBRL, filings, prices, derived metrics).
+2. Determine the source's publication semantics (when did this datapoint
+   become observable to a market participant?).
+3. Filter by `publication_date <= D`. If publication is unknown,
+   **stop and tell the user the query is unsafe**.
+4. State explicitly which `as_of_date` was used and which records were
+   excluded for being future-dated.
+
+## Workflow when writing backtest code
+
+- Every read of historical state must take a `query_date` argument and
+  filter on `filing_date <= query_date` (or equivalent).
+- Never store "current" values in a structure used for historical lookup.
+- When in doubt, prefer the EARLIEST plausible publication date over the
+  latest — bias toward under-claiming what was knowable.
+- Tests: include a "future-data leak" test that fails if any record with
+  `filing_date > query_date` is returned by a historical query.
+
+## Phrases that should trigger this skill
+
+- "what was the float of X on [past date]"
+- "backtest this strategy"
+- "shares outstanding at [past date]"
+- "compute [metric] historically"
+- "build a point-in-time database"
+- "as of [date]"
+- "lookahead-safe"
+- "survivorship bias" / "look-ahead bias"
+
+## What this skill is NOT
+
+This is not a forecasting or prediction skill. It does not tell you what
+will happen. It tells you what you were ALLOWED to know at a moment in
+time. Use it before any historical reasoning. Combine with domain skills
+(SEC filing types, dilution events) for full coverage.
