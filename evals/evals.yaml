@@ -140,3 +140,17 @@ evals:
       - {regex: "(yes.{0,5}correct|reasonable approach|that works)"}
     description: "Locate failure is binary (trade doesn't happen), not slippage"
     differentiator: true
+
+  - id: survivorship-reverse-split-delist
+    skill: survivorship-bias
+    prompt: |
+      I'm building a small-cap backtest universe by pulling all
+      tickers with sub-$300M market cap *today*, then running my
+      strategy on their 2018-2023 history. Any issues? Be concise.
+    must_contain:
+      - {regex: "(survivorship|survivor.{0,3}bias|delist|merged|reverse.split)"}
+      - {regex: "(point.in.time|as of|historical (universe|membership|constituent)|reconstitut)"}
+    must_not_contain:
+      - {regex: "(looks (good|fine|reasonable)|valid approach|that works)"}
+    description: "Should flag survivorship bias from today's universe + historical strategy"
+    differentiator: true

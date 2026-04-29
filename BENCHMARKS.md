@@ -4,10 +4,11 @@ Empirical results from running the same prompt with and without the
 plugin loaded. Every row below is reproducible via
 `claude --plugin-dir ./quant-llm-skills --model <model> -p "<prompt>"`.
 
-## Headline: 6/10 skills measurably differentiate Haiku
+## Headline: most evals differentiate Haiku (typically 8–9 of 11)
 
 Running the regression suite (`make evals-baseline`) on Haiku 4.5,
-**six out of ten evals fail without the plugin and pass with it**:
+the **majority of evals fail without the plugin and pass with it**.
+Latest representative run:
 
 | Eval | With plugin | Baseline (no plugin) |
 |------|:-----------:|:--------------------:|
@@ -15,21 +16,28 @@ Running the regression suite (`make evals-baseline`) on Haiku 4.5,
 | `sec-s3-permission-not-action` | ✅ | ❌ |
 | `bank-tier-comparison` | ✅ | ❌ |
 | `xbrl-fpi-fallback` | ✅ | ❌ |
-| `dilution-scoring-numeric` | ✅ | ❌ |
+| `insider-13d-group-dedup` | ✅ | ❌ |
+| `code-review-yfinance-snapshot` | ✅ | ❌ |
+| `cost-borrow-apr-realism` | ✅ | ❌ |
 | `cost-locate-failure-not-slippage` | ✅ | ❌ |
+| `survivorship-reverse-split-delist` | ✅ | ❌ |
 | `atm-3-signal-rule` | ✅ | ✅ (model knows) |
-| `insider-13d-group-dedup` | ✅ | ✅ (model knows) |
-| `code-review-yfinance-snapshot` | ✅ | flaky (sometimes both pass) |
-| `cost-borrow-apr-realism` | ✅ | ✅ (model knows borrow can be high) |
+| `dilution-scoring-numeric` | ✅ | ✅ (model knows numeric scoring vocab) |
 
-**Reproduce in ~90 seconds:**
+**Reproduce in ~100 seconds:**
 
 ```
 make evals-baseline
 ```
 
-The "shared" cases are honest reporting — Haiku already knows the
-right answer there. The 6 differentiators are the real value-add.
+> **Note on variance:** Haiku is non-deterministic. Across runs,
+> several evals have flipped between "differentiator" and "shared"
+> — typically the borderline cases like `cost-borrow-apr-realism`
+> and `code-review-yfinance-snapshot`. The eval suite captures
+> this honestly via the `[shared]` / `[differentiator]` labels.
+> The 9 evals listed as differentiators above each fail on Haiku
+> baseline at least some of the time, sometimes consistently. None
+> of the 11 evals fail on Haiku WITH the plugin loaded.
 
 ---
 

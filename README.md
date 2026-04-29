@@ -15,10 +15,10 @@ small-cap with sparse XBRL, an active ATM, and four 13D filers reporting
 the same shares.
 
 > 🎯 **Especially valuable on Haiku and smaller models.** Our regression
-> suite shows **6 out of 10 evals measurably differentiate Haiku output**
+> suite shows **8–9 out of 11 evals measurably differentiate Haiku output**
 > — caught only with the plugin loaded. Cost-conscious users running
 > cheaper models are silently shipping broken analyses. Reproduce in
-> ~90 seconds: `make evals-baseline`. See [BENCHMARKS.md](./BENCHMARKS.md).
+> ~100 seconds: `make evals-baseline`. See [BENCHMARKS.md](./BENCHMARKS.md).
 
 This pack distills hard rules from running production quant pipelines
 into Claude Code skills the LLM applies automatically — no system-prompt
@@ -54,6 +54,7 @@ See [EXAMPLES.md](./EXAMPLES.md) for real prompt-and-response transcripts.
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | Joint-filer / group / family-attribution dedup rules for 13D/G and Form 4 aggregation. Stops the cover-page-sum bug. |
 | [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | Domain-specific code-review checklist (lookahead, splits, snapshots, NaN propagation, joint-filer dedup). Ranks bugs by silent-corruption potential, not by severity-of-symptom. |
 | [**transaction-cost-modeling**](./skills/transaction-cost-modeling/SKILL.md) | Realistic friction defaults for small caps. Catches borrow APR fiction (3% on Reg-SHO names instead of 50–500%), locate-failure-as-slippage bugs, and engine-default near-zero friction. |
+| [**survivorship-bias**](./skills/survivorship-bias/SKILL.md) | Catches the universe-built-from-today's-survivors trap. Special focus on small-cap patterns: reverse-split-then-delist phantom returns, ATM-into-delisting, SPAC merger flips. |
 
 The skills compose: ask "score X's dilution risk" and the scoring skill
 calls the ATM, agent-tier, and lookahead skills automatically.

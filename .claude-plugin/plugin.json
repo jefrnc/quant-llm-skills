@@ -16,6 +16,7 @@
     "./skills/dilution-event-scoring",
     "./skills/insider-dedup",
     "./skills/code-review-for-quant",
-    "./skills/transaction-cost-modeling"
+    "./skills/transaction-cost-modeling",
+    "./skills/survivorship-bias"
   ]
 }

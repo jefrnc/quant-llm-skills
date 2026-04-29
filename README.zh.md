@@ -43,6 +43,7 @@ skills，LLM 自动应用 —— 无需修改 system prompt、无需手动触发
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | 13D/G 与 Form 4 聚合中的联合 filer / 团体 / 家庭归属去重规则。阻止 cover-page-sum 的 bug。 |
 | [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | 量化代码审查清单（lookahead、splits、snapshots、NaN、联合 filer 去重）。按*静默腐蚀*潜力排序 bug，而非按表面严重性。 |
 | [**transaction-cost-modeling**](./skills/transaction-cost-modeling/SKILL.md) | 小盘股的现实摩擦默认值。捕获 borrow APR 失真（Reg SHO 名称上 3% 而非 50–500%）、locate-failure 被错误建模为 slippage、以及引擎接近零摩擦的默认值。 |
+| [**survivorship-bias**](./skills/survivorship-bias/SKILL.md) | 捕获"用今天幸存者构建宇宙"陷阱。特别关注小盘股模式：reverse-split-then-delist 幻象收益、ATM-into-delisting、SPAC 合并翻转。 |
 
 各 skill 互相组合：让它 "score X's dilution risk"，scoring skill 会
 自动调用 ATM、agent-tier 和 lookahead 等 skills。

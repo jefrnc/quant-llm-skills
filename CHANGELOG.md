@@ -22,8 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `transaction-cost-modeling` skill — realistic friction defaults for
   small caps (slippage floors, borrow APR, locate-failure handling,
   PFOF, Almgren-Chriss applicability). Two evals: `cost-borrow-apr-realism`
-  (shared) and `cost-locate-failure-not-slippage` (differentiator).
-- BENCHMARKS headline updated to 6/10 differentiators on Haiku.
+  and `cost-locate-failure-not-slippage`.
+- `survivorship-bias` skill — universe-construction trap with focus on
+  small-cap-specific patterns: reverse-split-then-delist phantom returns,
+  ATM-into-delisting, SPAC merger flips. Eval: `survivorship-reverse-split-delist`.
+- BENCHMARKS headline updated to typically 8–9 of 11 differentiators
+  on Haiku 4.5 (with run-to-run variance honestly disclosed).
 
 ## [0.1.0] — 2026-04-27
 

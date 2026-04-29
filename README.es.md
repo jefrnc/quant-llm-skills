@@ -50,6 +50,7 @@ y respuesta.
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | Reglas de dedup para joint filers / grupos / atribución familiar en 13D/G y Form 4. Frena el bug del cover-page-sum. |
 | [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | Checklist de code review específico de quant (lookahead, splits, snapshots, NaN, dedup de joint filers). Rankea bugs por *silent corruption*, no por severidad-aparente. |
 | [**transaction-cost-modeling**](./skills/transaction-cost-modeling/SKILL.md) | Defaults de fricción realistas para small caps. Caza el bug de borrow APR ficticio (3% en nombres Reg SHO en lugar de 50–500%), locate-failure modelado como slippage, y los defaults near-zero de los engines. |
+| [**survivorship-bias**](./skills/survivorship-bias/SKILL.md) | Caza el trap de "armar universo con sobrevivientes de hoy". Foco especial en patrones small-cap: phantom returns por reverse-split-y-delist, ATM-hacia-delisting, SPAC merger flips. |
 
 Los skills componen: pedile "score X dilution risk" y el scoring llama
 a los skills de ATM, agent-tier y lookahead automáticamente.

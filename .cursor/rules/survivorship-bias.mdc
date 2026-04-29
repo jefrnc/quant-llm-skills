@@ -1,0 +1,188 @@
+---
+description: Use when constructing a backtest universe, computing index/sector returns, ranking strategies, or comparing performance across time. Catches the silent inflation that comes from using today's universe (or today's ticker resolution, or today's index membership) for a historical backtest. Especially severe in small caps and FPI-heavy universes where delisting rates exceed 30% over five-year windows.
+alwaysApply: false
+---
+
+# Survivorship bias
+
+The companion to `lookahead-safety`: that one stops you from using
+data that didn't exist yet. This one stops you from using a UNIVERSE
+that didn't exist yet. Together they're the two halves of "what was
+actually knowable, on what tickers, on a given date."
+
+## Core principle
+
+**A backtest universe must be reconstructed at every rebalance /
+query date from the membership snapshot AT that date — never from
+today's resolution.**
+
+Today's S&P 500 contains companies that joined in 2024.
+Today's Russell 3000 excludes companies that delisted in 2022.
+Today's "all US small-caps" is filtered by who survived to today.
+
+Using any of those for a 2018 backtest is the single most common way
+to manufacture alpha that doesn't exist.
+
+## Where survivorship bias enters silently
+
+### 1. Universe construction
+**Bug:** "Pull all small caps with mkt cap < $300M today, then run
+the strategy on their 2018-2023 history."
+**Why wrong:** The bankrupt, merged, and reverse-split-delisted small
+caps from that period are gone. You're testing only on companies
+that survived. Returns inflated, drawdowns understated.
+**Fix:** point-in-time universe — at each rebalance date, query the
+universe AS OF that date including names that subsequently delisted.
+
+### 2. Ticker resolution
+**Bug:** Vendor API returns "no data" for a delisted ticker, or
+silently returns the SUCCESSOR entity's data.
+**Why wrong:** Some yfinance / Polygon resolutions for delisted
+tickers map to merger-acquirer prices, fabricating the equity
+trajectory. (Documented for HDFCBANK demerger, FAANG-era M&A
+patterns, several SPAC-merger flips.)
+**Fix:** require a delisting / effective-date table; never trust
+ticker-only resolution. If a vendor returns prices for a "delisted"
+ticker, treat as suspect until verified.
+
+### 3. Index membership
+**Bug:** "Use the Russell 3000 components for my 2018-2023 backtest."
+**Why wrong:** Russell rebalances in June each year. Today's R3000
+is the June 2025 reconstitution; June 2018's was different and is
+the correct snapshot for any 2018-06-25 to 2019-06-24 query.
+**Fix:** historical constituents (LSEG, Siblis Research, Bloomberg's
+PORT) keyed by reconstitution date.
+
+### 4. Strategy ranking / leaderboards
+**Bug:** "Backtested top 10 strategies on names with > 5 years of
+history."
+**Why wrong:** "5 years of history" filters by survival. The
+strategies that worked on subsequently-delisted names are pruned.
+**Fix:** include short-history names with synthetic
+"strategy-not-applicable" outcomes for periods before they listed.
+
+### 5. Manager / fund track records
+**Bug:** Hedge fund index based on "currently reporting funds".
+**Why wrong:** Closed and blown-up funds drop out of the index.
+Inflates the asset class.
+**Fix:** include the dropouts at their last-reported value, not zero
+and not removed.
+
+## Small-cap-specific traps (the lane this skill cares most about)
+
+### Reverse-split-then-delist phantom returns
+**Pattern:** Small cap does a 1:20 reverse split to maintain Nasdaq
+listing compliance, then delists 30–90 days later anyway.
+**Why dangerous:** Adjusted-price feeds apply the 20x split factor
+to all pre-split prices. A name that traded $0.05 → $1.00 (from
+reverse split) → $0.10 (delisting) shows in adjusted feeds as a
+$1.00 → $1.00 → $0.10 trajectory. If you exit at the last available
+price BEFORE delisting, the adjusted feed makes it look like a
+20x phantom return on the holding period.
+**Fix:** raw OHLCV + split table + delisting table. Treat any name
+that reverse-split + delisted within ~120 days as a survivorship-
+adjustment candidate; verify the actual cash-out value.
+
+### ATM-into-delisting
+**Pattern:** Heavy ATM dilution + Nasdaq compliance failure +
+delisting → shareholders end up with shares of nothing.
+**Why dangerous:** Last-trade price on the last trading day overstates
+realizable value. Pink-sheet quotes after delisting can be 80–95%
+discount to last Nasdaq print.
+**Fix:** mark delisted positions to ZERO unless there is a documented
+post-delisting realization (cash distribution, M&A consideration).
+
+### Reg SHO threshold residency as leading indicator
+**Pattern:** Names that sit on the Reg SHO threshold list for >13
+consecutive days have an elevated probability of subsequent forced
+delisting (failure to meet listing standards) within 6–12 months.
+**Use:** when constructing a small-cap short universe, names that
+satisfy "Reg SHO threshold >13 days" should NOT be filtered out at
+the rebalance — keeping them in (with realistic borrow cost from
+`transaction-cost-modeling`) is what tests the strategy on the
+candidates that mattered.
+
+### SPAC pre-merger / post-merger discontinuity
+**Pattern:** SPAC trades at $10 NAV pre-merger; post-merger the
+combined entity often sees significant deviation. Many SPACs that
+merged in 2021 are now trading <$1 or have delisted.
+**Why dangerous:** Backtests using "SPAC tickers" today miss the
+~30%+ that have delisted; backtests starting from "pre-merger SPAC"
+need to handle the ticker change at merger date and the failure
+mode if the deal didn't close.
+
+### Reverse-stock-split anti-pattern detection
+A 1:N reverse split where N >= 5 on a sub-$300M issuer is, per
+SEC and Nasdaq listing data, more often than not a compliance
+move that precedes one of:
+1. Continued dilution to fund operations
+2. Delisting within 12 months
+3. Merger of convenience with a private operator (de-SPAC variant)
+
+Treat such names as **higher-than-baseline survivorship-adjustment
+risk** in any backtest covering the period.
+
+## Data sources (where to get survivorship-bias-free universes)
+
+| Source | Notes |
+|--------|-------|
+| QuantConnect AlgoSeek | ~27,500 US tickers since 1998, includes delisted |
+| Norgate Data | 25,222 delisted US securities 1950-2022, paid |
+| Sharadar SF1 / SEP | Point-in-time fundamentals + prices, paid |
+| CRSP | Academic gold standard, license-only |
+| SEC EDGAR full-text search + delisting Form 25 filings | Free, manual reconstruction |
+| LSEG / FTSE Russell historical constituents | Paid, authoritative for index membership |
+| Polygon delisted tickers endpoint | Free with subscription, ~partial coverage |
+| **AVOID:** yfinance for delisted resolution | Silently maps to successor entities |
+
+Free reconstruction path: SEC's quarterly Form 25 delisting filings +
+EDGAR's company-tickers feed snapshot per quarter + manual ticker-
+change tracking from 8-K item 5.07 disclosures.
+
+## Workflow when reviewing a backtest universe
+
+1. Identify the universe definition (filter, index, manual list).
+2. Confirm membership is point-in-time, not today's snapshot.
+3. Confirm delisted names are present at their delisting date with
+   either a realized cash value or a marked-to-zero treatment.
+4. Confirm ticker-level data is sourced from a delisting-aware feed,
+   not yfinance/info-style resolution.
+5. For small-cap universes specifically: count the delisting rate
+   over the backtest window. If it's <5%, the universe is suspiciously
+   filtered. Reality is 10–30%+ over 5-year windows for that universe.
+6. Stamp the analysis with the universe-as-of date and the delisting-
+   data source for reproducibility.
+
+## Composition with other skills
+
+- **`lookahead-safety`**: same principle (no future data) applied to
+  a different dimension (universe vs. dataset).
+- **`dilution-event-scoring`**: high scores predict delisting risk;
+  delistings are exactly the names survivorship bias erases.
+- **`transaction-cost-modeling`**: HTB borrow + extreme spreads are
+  precursors to delisting; if the cost model is realistic, you
+  naturally include the delisted names with their actual exit costs.
+- **`sec-filing-types`**: NT 10-K / NT 10-Q / Form 25 are the
+  filings that signal listing-compliance failures. A skill-aware
+  pipeline tracks these as leading indicators.
+
+## Phrases that should trigger this skill
+
+- "survivorship bias" / "survivor bias" / "survival bias"
+- "backtest universe" / "all small caps from 2018"
+- "I pulled all tickers with X" → followed by historical analysis
+- "delisted" / "delisting" / "removed from index"
+- "Reg SHO threshold"
+- "reverse split" + small cap
+- "SPAC merger" + historical
+- "Russell 3000 components" / "S&P 500 components" + historical date
+- "manager track record" / "fund index"
+
+## What this skill is NOT
+
+This is not a delisting database. It does not provide the historical
+membership data — that requires a paid feed or careful SEC
+reconstruction. It encodes the rules to spot when a universe is
+secretly survivor-filtered, with specific attention to the small-cap
+patterns (reverse-split-delist, ATM-into-delisting, SPAC-merger
+flips) where the bias is largest.
