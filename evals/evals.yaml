@@ -113,3 +113,30 @@ evals:
       - {regex: "(snapshot|current|not.{0,5}historical)"}
       - {regex: "(lookahead|look.ahead|future|2026|today)"}
     description: "Should flag yfinance snapshot as unsafe for historical"
+
+  - id: cost-borrow-apr-realism
+    skill: transaction-cost-modeling
+    prompt: |
+      I'm backtesting a short strategy on small-cap stocks that hit
+      the Reg SHO threshold list. My friction model uses borrow_apr =
+      3% and slippage = 5 bps. Is this realistic? Be concise.
+    must_contain:
+      - {regex: "(no|unrealistic|wrong|too low|fiction|understat)"}
+      - {regex: "(50|100|HTB|hard.to.borrow|threshold|annualized)"}
+    must_not_contain:
+      - {regex: "(yes.{0,5}realistic|looks reasonable|that's fine)"}
+    description: "Should flag 3% borrow on Reg SHO names as massively understated"
+
+  - id: cost-locate-failure-not-slippage
+    skill: transaction-cost-modeling
+    prompt: |
+      My short-side backtest sometimes can't get a locate. I'm
+      modeling this as additional 50 bps slippage to account for the
+      worse fill. Is this the right approach? Be concise.
+    must_contain:
+      - {regex: "(no|wrong|incorrect|not.{0,5}slippage)"}
+      - {regex: "(skip|don.t trade|does.{0,3}not happen|cannot short|fabricat|miss|binary)"}
+    must_not_contain:
+      - {regex: "(yes.{0,5}correct|reasonable approach|that works)"}
+    description: "Locate failure is binary (trade doesn't happen), not slippage"
+    differentiator: true

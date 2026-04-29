@@ -49,6 +49,7 @@ y respuesta.
 | [**dilution-event-scoring**](./skills/dilution-event-scoring/SKILL.md) | Framework 0-100 que integra ATM + tier + recencia + cash runway + estructura + historia. Reproducible, auditable, con thresholds accionables. |
 | [**insider-dedup**](./skills/insider-dedup/SKILL.md) | Reglas de dedup para joint filers / grupos / atribución familiar en 13D/G y Form 4. Frena el bug del cover-page-sum. |
 | [**code-review-for-quant**](./skills/code-review-for-quant/SKILL.md) | Checklist de code review específico de quant (lookahead, splits, snapshots, NaN, dedup de joint filers). Rankea bugs por *silent corruption*, no por severidad-aparente. |
+| [**transaction-cost-modeling**](./skills/transaction-cost-modeling/SKILL.md) | Defaults de fricción realistas para small caps. Caza el bug de borrow APR ficticio (3% en nombres Reg SHO en lugar de 50–500%), locate-failure modelado como slippage, y los defaults near-zero de los engines. |
 
 Los skills componen: pedile "score X dilution risk" y el scoring llama
 a los skills de ATM, agent-tier y lookahead automáticamente.

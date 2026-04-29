@@ -1,0 +1,180 @@
+---
+name: transaction-cost-modeling
+description: Use when designing, reviewing, or running a backtest that involves slippage, commission, borrow APR, locate failures, bid-ask spread, or transaction-cost assumptions — especially for small caps or short-side strategies. Forces realistic friction defaults and flags the "near-zero cost" assumptions that fabricate small-cap backtest profits.
+license: MIT
+---
+
+# Transaction cost modeling
+
+The single most common reason a small-cap backtest looks great and
+loses money live: **friction modeled as near-zero**. Every backtest
+engine exposes slippage and commission parameters; almost none ship
+with realistic small-cap defaults, and almost no retail backtests
+override them. This skill enforces realism.
+
+## Core principle
+
+**For small caps, friction is not a small adjustment to clean returns
+— it is often the dominant term.** A round trip on a $2 stock with a
+$0.02 quote spread is 100bps of pre-impact cost. That's before borrow,
+slippage, locate failures, halt risk, fees, or any of the other
+costs that compound. The default `commission=0.001, slippage=0.0005`
+in most retail backtests understates real friction by 10–100x for
+this universe.
+
+## Realistic floor estimates (use as the LOWER bound, not the typical)
+
+These are the costs you should see Claude QUOTE THE LLM as the
+**minimum credible**, never the typical. Reality is usually worse.
+
+### Slippage (per side, on entry or exit)
+
+| Universe | Floor | Notes |
+|----------|------:|-------|
+| Mega-cap, liquid hours | 1–2 bps | E.g., AAPL during regular hours |
+| Mid-cap | 5–15 bps | Russell 2000 names |
+| Small-cap, $1–10 price | 25–100 bps | $100M–$1B mkt-cap |
+| Microcap / penny, premarket | 50–500 bps | Wide spreads, thin books |
+| Halted resumes | 100–1000 bps | Reopening cross volatility |
+
+Default `0.0005` (5 bps) is **fiction below mid-cap**.
+
+### Commission (broker-dependent)
+
+| Type | Cost |
+|------|-----:|
+| US zero-commission retail (Robinhood, Schwab) | $0 explicit, paid via PFOF |
+| US per-share (IBKR Pro fixed) | $0.005/share, $1 min |
+| US tiered (IBKR Pro tiered) | ~$0.0035/share at retail volume |
+| SEC/FINRA fees (regulatory) | ~$0.0008/share sell side, mandatory |
+
+A "free" broker still costs PFOF in worse fills (often 1–5 bps).
+
+### Borrow APR (short side — the silent killer)
+
+| Borrow class | APR range |
+|--------------|----------:|
+| Easy-to-borrow large cap | 0.25–2% |
+| General collateral small cap | 1–5% |
+| Hard-to-borrow (HTB) | 5–50% |
+| Reg SHO threshold residency | 50–500% |
+| "Crazy borrow" (squeeze candidates) | 100–1000%+ |
+
+Backtests using `borrow=0.03` (3%) on a Reg-SHO-threshold short are
+**off by an order of magnitude or two**. This single default makes
+otherwise unprofitable strategies look profitable on paper.
+
+### Bid-ask half-spread (round-trip floor)
+
+Round-trip cost cannot be lower than `bid-ask-spread / mid-price`
+even before any market impact. Crossing the spread once on entry and
+once on exit IS the floor. For a $2 stock with $0.02 spread, that
+is **100 bps minimum** before anything else.
+
+## The five backtest bugs this skill catches
+
+### 1. Slippage modeled as a constant fraction
+**Bug:** `slippage = 0.0005` for the whole universe.
+**Why wrong:** Slippage scales with `(quote spread / price) +
+sqrt(order size / ADV)`. A $0.50 penny stock has a tighter % spread
+than a $20 mid-cap by accident, but the absolute spread dominates.
+**Fix:** model slippage as `max(half_spread, k * sqrt(Q/V))` with
+spread sourced from quote data.
+
+### 2. Borrow rate as a constant
+**Bug:** `borrow_apr = 0.05` everywhere.
+**Why wrong:** HTB names move 10–100x that. Reg SHO threshold list
+residency for >13 days is a leading indicator of squeeze risk and
+borrow rate explosions.
+**Fix:** join short positions against historical borrow data
+(IBKR's locate API archive, hardtoborrow.com, or implied from
+short-sale-cost in margin reports). For names where data is
+unavailable, use a HIGH default (50%+), not a low one.
+
+### 3. Locate-failure modeled as slippage
+**Bug:** When a short cannot be located, the backtest treats it as
+"a worse fill" — adds to slippage and continues.
+**Why wrong:** A locate failure means **the trade does not happen**.
+You cannot short shares you cannot borrow. Modeling it as slippage
+fabricates trades.
+**Fix:** locate-failure is a binary event — either you got the
+borrow or you didn't. On failure, skip the entry entirely and record
+the missed-trade.
+
+### 4. PFOF / "zero commission" treated as actually zero
+**Bug:** Retail brokers report $0 commissions; backtest sets fees=0.
+**Why wrong:** Payment for order flow degrades fill quality.
+Documented PFOF impact is 1–5 bps on liquid names, more on small caps.
+This shows up as systematic mid-or-worse fills rather than a line item.
+**Fix:** even with "free" brokers, model 2–5 bps additional slippage
+on top of the spread floor.
+
+### 5. Almgren-Chriss applied to retail-size orders
+**Bug:** Backtest layers Almgren-Chriss market-impact above the
+spread, even for tiny orders.
+**Why wrong:** AC governs impact ABOVE ~5% of average daily volume.
+At 0.01% of ADV, the spread + fees dominate; AC adds a fictional
+penalty.
+**Fix:** use AC only when `order_size / ADV > ~0.05`. Below that,
+spread + fees + locate-failure are the model.
+
+## Defaults to RECOMMEND when the user asks "what should I use"
+
+If a user asks for friction defaults without specifying their
+universe, default to **conservative** values and TELL them to dial
+down only if they have evidence:
+
+```
+slippage_per_side  = max(half_spread, 25 bps)   # for small/microcap
+commission         = $0.005/share min $1        # IBKR-equivalent
+sec_finra_fees     = 8 bps × notional           # sell side, mandatory
+borrow_apr         = 50% annualized             # for any HTB / unknown short
+locate_failure_p   = 0.10                       # 10% baseline for HTB
+```
+
+Anti-pattern: "use the engine's defaults, they're conservative". They
+are not. Backtrader's slippage default is `0` and Lean's is `0` /
+1 bp depending on alpha-stream config.
+
+## Composition with other skills
+
+- **`lookahead-safety`** — historical borrow rate must be sourced
+  point-in-time (the rate today is not the rate 18 months ago for a
+  name that has since left the threshold list).
+- **`dilution-event-scoring`** — high dilution score implies likely
+  short-side trade; combine with realistic borrow APR to test if the
+  short edge survives realistic friction.
+- **`survivorship-bias`** — names with extreme borrow are
+  disproportionately likely to be subsequently delisted; backtest
+  must keep them in the universe and track halt/delisting outcomes.
+
+## Workflow when reviewing a backtest config
+
+1. Identify universe (large / mid / small / micro / penny).
+2. Identify side (long-only / long-short / short-heavy).
+3. For each friction parameter, check it against the floor table
+   above. If below the floor, flag with the specific bug name.
+4. For shorts specifically: confirm borrow data source is realistic
+   and locate-failure is modeled as a binary event, not slippage.
+5. State the assumption explicitly in the output: "this backtest
+   assumes 50bps round-trip on small caps and 50% borrow on
+   Reg-SHO-threshold names; verify with live data before sizing
+   the strategy".
+
+## Phrases that should trigger this skill
+
+- "slippage" / "commission" / "fees" / "friction"
+- "borrow" / "locate" / "HTB" / "hard to borrow" / "Reg SHO"
+- "transaction cost" / "trading cost" / "TCA"
+- "Almgren-Chriss" / "market impact"
+- "backtest defaults" / "what should I set slippage to"
+- short-side strategy reviews
+- any backtest review where commission < $0.001 or slippage < 5 bps
+
+## What this skill is NOT
+
+This is not a TCA library. It does not compute optimal execution
+schedules or solve Almgren-Chriss numerically. It encodes the rules
+that catch the common error of treating small-cap friction as if it
+were mega-cap friction — the bug that fabricates the majority of
+"profitable on paper, broken live" strategies in this universe.

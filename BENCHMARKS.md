@@ -4,10 +4,10 @@ Empirical results from running the same prompt with and without the
 plugin loaded. Every row below is reproducible via
 `claude --plugin-dir ./quant-llm-skills --model <model> -p "<prompt>"`.
 
-## Headline: 5/8 skills measurably differentiate Haiku
+## Headline: 6/10 skills measurably differentiate Haiku
 
 Running the regression suite (`make evals-baseline`) on Haiku 4.5,
-**5 out of 8 evals fail without the plugin and pass with it**:
+**six out of ten evals fail without the plugin and pass with it**:
 
 | Eval | With plugin | Baseline (no plugin) |
 |------|:-----------:|:--------------------:|
@@ -16,18 +16,20 @@ Running the regression suite (`make evals-baseline`) on Haiku 4.5,
 | `bank-tier-comparison` | ✅ | ❌ |
 | `xbrl-fpi-fallback` | ✅ | ❌ |
 | `dilution-scoring-numeric` | ✅ | ❌ |
+| `cost-locate-failure-not-slippage` | ✅ | ❌ |
 | `atm-3-signal-rule` | ✅ | ✅ (model knows) |
 | `insider-13d-group-dedup` | ✅ | ✅ (model knows) |
-| `code-review-yfinance-snapshot` | ✅ | ✅ (model knows) |
+| `code-review-yfinance-snapshot` | ✅ | flaky (sometimes both pass) |
+| `cost-borrow-apr-realism` | ✅ | ✅ (model knows borrow can be high) |
 
-**Reproduce in ~70 seconds:**
+**Reproduce in ~90 seconds:**
 
 ```
 make evals-baseline
 ```
 
-The 3 "shared" cases are honest reporting — Haiku already knows the
-right answer for those. The 5 differentiators are the real value-add.
+The "shared" cases are honest reporting — Haiku already knows the
+right answer there. The 6 differentiators are the real value-add.
 
 ---
 
