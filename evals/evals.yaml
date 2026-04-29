@@ -1,0 +1,115 @@
+# Regression evals for quant-llm-skills.
+#
+# Each eval validates that a skill applies its reasoning when expected.
+# Run with:
+#   python3 evals/run_evals.py             # with-plugin only (CI gate)
+#   python3 evals/run_evals.py --baseline  # also runs without plugin
+#   python3 evals/run_evals.py --filter <id-substring>
+#
+# Schema:
+#   id              unique identifier
+#   skill           which skill is expected to fire
+#   model           override default model (claude-haiku-4-5-20251001)
+#   prompt          user prompt (multi-line OK)
+#   must_contain    list of strings or {regex: "..."} the response MUST contain
+#   must_not_contain list of strings or {regex: "..."} the response MUST NOT contain
+#   description     one-line summary
+#   differentiator  optional bool — if true, --baseline expects baseline to FAIL
+#                   the same checks (proves the skill, not the model, fixed it)
+
+default_model: claude-haiku-4-5-20251001
+
+evals:
+  - id: lookahead-xbrl-period-end
+    skill: lookahead-safety
+    prompt: |
+      I have AAPL companyfacts.json. To get shares outstanding for
+      backtest on 2023-06-15, I write:
+      eligible = [d for d in datapoints if d['end'] <= '2023-06-15']
+      Is this correct? Be very concise (3 sentences max).
+    must_contain:
+      - {regex: "(filed|filing|accepted|publication)"}
+      - {regex: "(look.{0,2}ahead|future|wasn.t (known|public|available)|hadn.t been filed)"}
+    must_not_contain:
+      - {regex: "(correct in principle|logic is correct|that's correct|that is correct)"}
+    description: "Haiku must catch period_end → filed lookahead bug"
+    differentiator: true
+
+  - id: sec-s3-permission-not-action
+    skill: sec-filing-types
+    prompt: "A small-cap company just filed an S-3. Is this a dilution event by itself? Be concise."
+    must_contain:
+      - {regex: "(permission|capacity|not.{0,3}(action|event)|shelf)"}
+      - {regex: "(424B|takedown)"}
+    description: "S-3 alone is permission, not action"
+    differentiator: true
+
+  - id: atm-3-signal-rule
+    skill: atm-detection
+    prompt: |
+      Company X has an effective S-3 from 6 months ago and just filed
+      a 424B5 referencing a Sales Agreement with H.C. Wainwright.
+      Is this an active ATM? Be concise.
+    must_contain:
+      - {regex: "Sales Agreement"}
+      - {regex: "(active|yes)"}
+    description: "Active ATM with placement agent name + 424B5 + Sales Agreement"
+
+  - id: bank-tier-comparison
+    skill: bank-tier-classification
+    prompt: |
+      Compare the dilution profile of an underwritten offering with
+      Goldman Sachs vs an ATM with H.C. Wainwright. Both small caps.
+      Use the tier framework if you know it. Be concise.
+    must_contain:
+      - {regex: "(tier\\s*1|bulge\\s*bracket|institutional)"}
+      - {regex: "(tier\\s*4|toxic|small.cap (specialist|placement)|aggressive)"}
+    description: "Should classify both into a tier framework"
+    differentiator: true
+
+  - id: xbrl-fpi-fallback
+    skill: xbrl-fallbacks
+    prompt: |
+      I'm pulling SEC XBRL for a recent FPI but companyfacts returns
+      404. Where do I get shares outstanding? Be concise.
+    must_contain:
+      - {regex: "20.F"}
+      - {regex: "(6.K|F.1|cover)"}
+    description: "Should reference FPI document hierarchy"
+    differentiator: true
+
+  - id: dilution-scoring-numeric
+    skill: dilution-event-scoring
+    prompt: |
+      Score the dilution risk for ticker XYZ. Inputs: active ATM with
+      H.C. Wainwright, 424B5 yesterday, 4-month runway, 5 dilution
+      events trailing 12 months. Total + verdict only.
+    must_contain:
+      - {regex: "(SEVERE|HIGH|MODERATE)"}
+      - {regex: "[0-9]{2,3}\\s*/\\s*100|score:?\\s*[0-9]+"}
+    description: "Should produce numeric score with verdict label"
+    differentiator: true
+
+  - id: insider-13d-group-dedup
+    skill: insider-dedup
+    prompt: |
+      I sum 4 separate 13D filings (CEO's fund + GP + adviser +
+      managing member) and get 47% insider ownership. Is that right?
+      Be concise.
+    must_contain:
+      - {regex: "(group|joint|same shares|same position|same underlying|13.d.{0,3}group)"}
+      - {regex: "(dedup|inflat|overcount|double|quadrupl|redundant|once|wrong|too high|4x)"}
+    description: "Should detect 13D group double-counting"
+
+  - id: code-review-yfinance-snapshot
+    skill: code-review-for-quant
+    prompt: |
+      Review this Python for backtest correctness:
+      def get_shares(ticker, query_date):
+          info = yf.Ticker(ticker).info
+          return info["sharesOutstanding"]
+      Be concise.
+    must_contain:
+      - {regex: "(snapshot|current|not.{0,5}historical)"}
+      - {regex: "(lookahead|look.ahead|future|2026|today)"}
+    description: "Should flag yfinance snapshot as unsafe for historical"

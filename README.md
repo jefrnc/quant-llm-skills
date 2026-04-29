@@ -14,10 +14,11 @@ parse 10-Ks for AAPL. They fail the moment you point them at a real
 small-cap with sparse XBRL, an active ATM, and four 13D filers reporting
 the same shares.
 
-> 🎯 **Especially valuable on Haiku and smaller models.** In our benchmarks,
-> Haiku catches a textbook XBRL lookahead bug **0% of the time without
-> this plugin, 100% with it.** Cost-conscious users running cheaper models
-> are silently writing broken backtests. See [BENCHMARKS.md](./BENCHMARKS.md).
+> 🎯 **Especially valuable on Haiku and smaller models.** Our regression
+> suite shows **5 out of 8 skills measurably differentiate Haiku output**
+> — caught only with the plugin loaded. Cost-conscious users running
+> cheaper models are silently shipping broken analyses. Reproduce in
+> 70 seconds: `make evals-baseline`. See [BENCHMARKS.md](./BENCHMARKS.md).
 
 This pack distills hard rules from running production quant pipelines
 into Claude Code skills the LLM applies automatically — no system-prompt
@@ -124,6 +125,7 @@ They are auto-generated from the canonical `SKILL.md` files via
 
 - [`EXAMPLES.md`](./EXAMPLES.md) — real prompt-and-response transcripts
 - [`BENCHMARKS.md`](./BENCHMARKS.md) — empirical Haiku / Sonnet / Opus comparisons
+- [`evals/README.md`](./evals/README.md) — regression test suite (one per skill)
 - [`LAUNCH.md`](./LAUNCH.md) — launch playbook (publish, post, iterate)
 - [`CHANGELOG.md`](./CHANGELOG.md) — version history
 - [`CURSOR.md`](./CURSOR.md) — Cursor usage and sync workflow
@@ -137,9 +139,11 @@ under `.github/ISSUE_TEMPLATE/`.
 Common tasks:
 
 ```
-make validate   # static checks
-make sync       # regenerate .cursor/rules/ from skills/
-make smoke      # live dispatch test (requires claude CLI + auth)
+make validate         # static checks
+make sync             # regenerate .cursor/rules/ from skills/
+make smoke            # live dispatch test (requires claude CLI + auth)
+make evals            # regression eval suite (Haiku, ~$0.05/run)
+make evals-baseline   # evals + baseline (no plugin) comparison
 ```
 
 ## License

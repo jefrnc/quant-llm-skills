@@ -1,0 +1,32 @@
+name: evals
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    # Skip if the repo doesn't have an ANTHROPIC_API_KEY secret configured.
+    # This lets forks and read-only checkouts still pass CI on `validate`.
+    if: ${{ vars.RUN_EVALS == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pyyaml
+
+      - name: Install Claude Code CLI
+        run: |
+          curl -fsSL https://claude.ai/install.sh | sh
+          echo "$HOME/.claude/bin" >> "$GITHUB_PATH"
+
+      - name: Run regression evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 evals/run_evals.py

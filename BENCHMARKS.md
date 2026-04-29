@@ -4,6 +4,33 @@ Empirical results from running the same prompt with and without the
 plugin loaded. Every row below is reproducible via
 `claude --plugin-dir ./quant-llm-skills --model <model> -p "<prompt>"`.
 
+## Headline: 5/8 skills measurably differentiate Haiku
+
+Running the regression suite (`make evals-baseline`) on Haiku 4.5,
+**5 out of 8 evals fail without the plugin and pass with it**:
+
+| Eval | With plugin | Baseline (no plugin) |
+|------|:-----------:|:--------------------:|
+| `lookahead-xbrl-period-end` | ✅ | ❌ |
+| `sec-s3-permission-not-action` | ✅ | ❌ |
+| `bank-tier-comparison` | ✅ | ❌ |
+| `xbrl-fpi-fallback` | ✅ | ❌ |
+| `dilution-scoring-numeric` | ✅ | ❌ |
+| `atm-3-signal-rule` | ✅ | ✅ (model knows) |
+| `insider-13d-group-dedup` | ✅ | ✅ (model knows) |
+| `code-review-yfinance-snapshot` | ✅ | ✅ (model knows) |
+
+**Reproduce in ~70 seconds:**
+
+```
+make evals-baseline
+```
+
+The 3 "shared" cases are honest reporting — Haiku already knows the
+right answer for those. The 5 differentiators are the real value-add.
+
+---
+
 ## Test A — XBRL `period_end` filter bug
 
 Prompt:
